@@ -2,19 +2,19 @@ package main
 
 import (
 	"fmt"
-	echoSwagger "github.com/swaggo/echo-swagger"
-	"go-swag-sample/echosimple/configs"
-	"go-swag-sample/echosimple/routes"
-	"net/http"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 	_ "go-swag-sample/docs/echosimple" // you need to update github.com/rizalgowandy/go-swag-sample with your own project path
+	"go-swag-sample/echosimple/configs"
+	"go-swag-sample/echosimple/routes"
 )
 
-// @title Echo Swagger Example API
+// @title Covid19 Cases and Vaccinations in India
 // @version 1.0
-// @description This is a sample server server.
+// @description This is a covid19 cases data server which when given the GPS coordinates of a location returns
+// @description the cases details as in confirmed, deceased, recovered, teseted along with vaccination details as in
+// @description single and double dose in coordinates provided State and in India in total
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
@@ -36,14 +36,8 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	// Routes
 	// run database
 	configs.ConnectDB()
-	//e.GET("/", HealthCheck)
-	//e.GET("/swagger/*", echoSwagger.WrapHandler)
-	//
-	//// Start server
-	//e.Logger.Fatal(e.Start(":3000"))
 
 	//routes
 	routes.CaseRoute(e)
@@ -51,24 +45,10 @@ func main() {
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	e.GET("/", func(c echo.Context) error { // GET function to the route = "/" path and an handler
-		return c.JSON(200, &echo.Map{"data": "Hello from Echo & mongoDB"}) // function that returns a JSON of "Hello from Echo & mongoDB".
+		return c.JSON(200, &echo.Map{"data": "Get Covid cases details here"}) // function that returns a JSON of "Hello from Echo & mongoDB".
 		// echo.Map is a shortcut for map[string]interface{} useful for JSON returns
 	})
 	port := fmt.Sprintf(":%s", configs.GetPort())
 	e.Logger.Fatal(e.Start(port)) // Start function is used to run the application on port 6000
 
-}
-
-// HealthCheck godoc
-// @Summary Show the status of server.
-// @Description get the status of server.
-// @Tags root
-// @Accept */*
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router / [get]
-func HealthCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": "Server is up and running",
-	})
 }

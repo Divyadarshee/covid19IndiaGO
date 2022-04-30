@@ -40,3 +40,7 @@ var StateCodes = map[string]string{
 	"Puducherry":        "PY",
 	"Total":             "TT",
 }
+
+var Covid19SourceUrl string = "https://data.covid19india.org/v4/min/data.min.json"
+
+var ReverseGeocodingUrl string = "https://eu1.locationiq.com/v1/reverse.php?key=pk.c8772d5c9e1d9046e5995be8c9edcaa4&lat=%f&lon=%f&format=json"

@@ -3,7 +3,7 @@ package responses
 type CaseResponse struct {
 	Status       int    `json:"status"`
 	Message      string `json:"message"`
-	CasesInState Cases  `json:"cases"`
+	CasesInState Cases  `json:"cases_in_state"`
 	CasesInIndia Cases  `json:"cases_in_india"`
 }
 
@@ -17,9 +17,3 @@ type Cases struct {
 	Vaccinated2 int64  `json:"vaccinated2"`
 	LastUpdated string `json:"last_updated"`
 }
-
-//type UserResponse struct {
-//	Status  int       `json:"status"`
-//	Message string    `json:"message"`
-//	Data    *echo.Map `json:"data"`
-//}
