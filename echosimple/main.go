@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	"go-swag-sample/echosimple/configs"
 	"go-swag-sample/echosimple/routes"
@@ -53,8 +54,8 @@ func main() {
 		return c.JSON(200, &echo.Map{"data": "Hello from Echo & mongoDB"}) // function that returns a JSON of "Hello from Echo & mongoDB".
 		// echo.Map is a shortcut for map[string]interface{} useful for JSON returns
 	})
-
-	e.Logger.Fatal(e.Start(":3000")) // Start function is used to run the application on port 6000
+	port := fmt.Sprintf(":%s", configs.GetPort())
+	e.Logger.Fatal(e.Start(port)) // Start function is used to run the application on port 6000
 
 }
 
