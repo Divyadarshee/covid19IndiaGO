@@ -39,6 +39,12 @@ func main() {
 	// run database
 	configs.ConnectDB()
 
+	// clear database
+	configs.ClearCollections()
+
+	//populate database
+	configs.PopulateDB()
+
 	//routes
 	routes.CaseRoute(e)
 
