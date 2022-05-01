@@ -124,6 +124,6 @@ func PopulateDB() {
 			fmt.Println(InsertErr.Error())
 		}
 
-		//fmt.Println(result)
+		fmt.Println(result.InsertedID)
 	}
 }
