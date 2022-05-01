@@ -23,7 +23,6 @@ var StateCodes = map[string]string{
 	"Punjab":                      "PB",
 	"Rajasthan":                   "RJ",
 	"Sikkim":                      "SK",
-	"State Unassigned":            "UN",
 	"Tamil Nadu":                  "TN",
 	"Telangana":                   "TG",
 	"Tripura":                     "TR",
