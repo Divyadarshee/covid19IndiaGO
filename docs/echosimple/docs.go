@@ -97,7 +97,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "covid19-go-deploy.herokuapp.com",
 	BasePath:         "/",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "Covid19 Cases and Vaccinations in India",
 	Description:      "This is a covid19 cases data server which when given the GPS coordinates of a location returns\nthe cases details as in confirmed, deceased, recovered, teseted along with vaccination details as in\nsingle and double dose in coordinates provided State and in India in total",
 	InfoInstanceName: "swagger",

@@ -60,5 +60,5 @@ paths:
       tags:
       - cases
 schemes:
-- http
+- https
 swagger: "2.0"

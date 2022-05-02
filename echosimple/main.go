@@ -27,7 +27,7 @@ import (
 
 // @host covid19-go-deploy.herokuapp.com
 // @BasePath /
-// @schemes http
+// @schemes https
 func main() {
 	// Echo instance
 	e := echo.New()
