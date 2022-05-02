@@ -8,6 +8,7 @@ import (
 	_ "go-swag-sample/docs/echosimple" // you need to update github.com/rizalgowandy/go-swag-sample with your own project path
 	"go-swag-sample/echosimple/configs"
 	"go-swag-sample/echosimple/routes"
+	"net/http"
 )
 
 // @title Covid19 Cases and Vaccinations in India
@@ -24,7 +25,7 @@ import (
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:3000
+// @host covid19-go-deploy.herokuapp.com
 // @BasePath /
 // @schemes http
 func main() {
@@ -50,11 +51,23 @@ func main() {
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	e.GET("/", func(c echo.Context) error { // GET function to the route = "/" path and an handler
-		return c.JSON(200, &echo.Map{"data": "Get Covid cases details here"}) // function that returns a JSON of "Hello from Echo & mongoDB".
-		// echo.Map is a shortcut for map[string]interface{} useful for JSON returns
-	})
+	e.GET("/", HealthCheck)
+
 	port := fmt.Sprintf(":%s", configs.GetPort())
 	e.Logger.Fatal(e.Start(port)) // Start function is used to run the application on port 6000
 
+}
+
+// HealthCheck godoc
+// @Summary Show the status of server.
+// @Description get the status of server.
+// @Tags root
+// @Accept */*
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router / [get]
+func HealthCheck(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": "Server is up and running",
+	})
 }

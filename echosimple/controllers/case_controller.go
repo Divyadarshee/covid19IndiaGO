@@ -26,7 +26,7 @@ var validate = validator.New()
 // GetCases godoc
 // @Summary Get latest covid19 cases.
 // @Description Get the covid19 cases details for the given GPS coordinates.
-// @Tags user
+// @Tags cases
 // @Accept */*
 // @Produce json
 // @Param latitude query float64 true "Latitude"

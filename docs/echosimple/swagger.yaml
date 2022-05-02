@@ -1,16 +1,19 @@
 basePath: /
-host: localhost:3000
+host: covid19-go-deploy.herokuapp.com
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server server.
+  description: |-
+    This is a covid19 cases data server which when given the GPS coordinates of a location returns
+    the cases details as in confirmed, deceased, recovered, teseted along with vaccination details as in
+    single and double dose in coordinates provided State and in India in total
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Echo Swagger Example API
+  title: Covid19 Cases and Vaccinations in India
   version: "1.0"
 paths:
   /:
@@ -33,7 +36,7 @@ paths:
     get:
       consumes:
       - '*/*'
-      description: Get the covid19 cases details for the given GPS location.
+      description: Get the covid19 cases details for the given GPS coordinates.
       parameters:
       - description: Latitude
         in: query
@@ -55,7 +58,7 @@ paths:
             type: object
       summary: Get latest covid19 cases.
       tags:
-      - user
+      - cases
 schemes:
 - http
 swagger: "2.0"
