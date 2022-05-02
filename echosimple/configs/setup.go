@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gomodule/redigo/redis"
 	"github.com/jmespath/go-jmespath"
 	state_data "go-swag-sample/echosimple/data"
 	"go-swag-sample/echosimple/models"
@@ -125,5 +126,23 @@ func PopulateDB() {
 		}
 
 		fmt.Println(result.InsertedID)
+	}
+}
+
+//Create a new pool connection to redis
+func CreateNewPool() *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:   80,
+		MaxActive: 12000,
+		Dial: func() (redis.Conn, error) {
+			//c, err := redis.Dial("tcp", ":6378")
+			c, err := redis.Dial("tcp", "redis-15037.c301.ap-south-1-1.ec2.cloud.redislabs.com:15037",
+				redis.DialUsername("dvd"),
+				redis.DialPassword("Dvd@6900"))
+			if err != nil {
+				panic(err.Error())
+			}
+			return c, err
+		},
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/gomodule/redigo/redis"
 	"github.com/jmespath/go-jmespath"
 	"github.com/labstack/echo/v4"
 	"go-swag-sample/echosimple/configs"
@@ -18,6 +19,7 @@ import (
 	"time"
 )
 
+var pool = configs.CreateNewPool()
 var caseCollection *mongo.Collection = configs.GetCollections(configs.DB, "cases")
 var validate = validator.New()
 
@@ -58,23 +60,122 @@ func GetCases(c echo.Context) error {
 	// Get the state code along with the name of the state
 	stateCode = GetStateFromGPS(models.GPS.Latitude, models.GPS.Longitude)
 
+	//return 400 if coordinates are out of India
 	_, isError := stateCode["Error"]
 	if isError == true {
-		return c.JSON(http.StatusInternalServerError, responses.CaseResponse{Status: http.StatusInternalServerError, Message: stateCode["Error"].(string), CasesInState: stateCases, CasesInIndia: indiaCases})
+		return c.JSON(http.StatusBadRequest, responses.CaseResponse{Status: http.StatusBadRequest, Message: stateCode["Error"].(string), CasesInState: stateCases, CasesInIndia: indiaCases})
 	}
 
-	stateDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": stateCode["StateCode"]}).Decode(&stateCases)
-	indiaDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": "TT"}).Decode(&indiaCases)
+	//redis
+	conn := pool.Get()
+	defer conn.Close()
 
-	if stateDBQueryErr != nil {
-		return c.JSON(http.StatusNotFound, responses.CaseResponse{Status: http.StatusNotFound, Message: stateDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: indiaCases})
+	//check if state cache exists
+	if CheckCache(conn, stateCode["StateCode"].(string)) != true {
+		fmt.Printf("Fetching data for state code: %s from DB \n", stateCode["StateCode"])
+		//fetching data from DB
+		stateDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": stateCode["StateCode"]}).Decode(&stateCases)
+		if stateDBQueryErr != nil {
+			return c.JSON(http.StatusNotFound, responses.CaseResponse{Status: http.StatusNotFound, Message: stateDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: indiaCases})
+		}
+
+		//caching
+		SetCache(conn, stateCode["StateCode"].(string), stateCases)
+
+	} else {
+		stateCache, stateCacheErr := RetrieveCache(conn, stateCode["StateCode"].(string), stateCases)
+		if stateCacheErr != nil {
+			fmt.Printf("Error while retrieving cache: %s \n", stateCacheErr)
+
+			//fetching data from DB
+			stateDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": stateCode["StateCode"]}).Decode(&stateCases)
+			if stateDBQueryErr != nil {
+				return c.JSON(http.StatusNotFound, responses.CaseResponse{Status: http.StatusNotFound, Message: stateDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: indiaCases})
+			}
+
+			//caching
+			SetCache(conn, stateCode["StateCode"].(string), stateCache)
+
+		} else {
+			stateCases = stateCache
+		}
 	}
 
-	if indiaDBQueryErr != nil {
-		return c.JSON(http.StatusInternalServerError, responses.CaseResponse{Status: http.StatusInternalServerError, Message: indiaDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: indiaCases})
+	//check if India cache exists
+	if CheckCache(conn, "TT") != true {
+		fmt.Println("Fetching data for state code: TT from DB")
+		//fetching data from DB
+		indiaDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": "TT"}).Decode(&indiaCases)
+		if indiaDBQueryErr != nil {
+			return c.JSON(http.StatusNotFound, responses.CaseResponse{Status: http.StatusNotFound, Message: indiaDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: indiaCases})
+		}
+
+		//caching
+		SetCache(conn, "TT", indiaCases)
+
+	} else {
+		indiaCache, indiaCacheErr := RetrieveCache(conn, "TT", indiaCases)
+		if indiaCacheErr != nil {
+			fmt.Printf("Error while retrieving cache: %s \n", indiaCacheErr)
+
+			//fetching data from DB
+			indiaDBQueryErr := caseCollection.FindOne(ctx, bson.M{"statecode": "TT"}).Decode(&indiaCases)
+			if indiaDBQueryErr != nil {
+				return c.JSON(http.StatusNotFound, responses.CaseResponse{Status: http.StatusNotFound, Message: indiaDBQueryErr.Error(), CasesInState: stateCases, CasesInIndia: stateCases})
+			}
+
+			//caching
+			SetCache(conn, "TT", indiaCases)
+		} else {
+			indiaCases = indiaCache
+		}
 	}
 
 	return c.JSON(http.StatusOK, responses.CaseResponse{Status: http.StatusOK, Message: "success", CasesInState: stateCases, CasesInIndia: indiaCases})
+}
+
+func CheckCache(conn redis.Conn, stateCode string) bool {
+
+	CacheExists, CacheExistsErr := redis.Bool(conn.Do("EXISTS", stateCode))
+	if CacheExistsErr != nil {
+		fmt.Printf("Error checking if key %s exists: %v \n", stateCode, CacheExistsErr)
+	}
+	return CacheExists
+}
+
+func SetCache(conn redis.Conn, stateCode string, stateCases models.Cases) {
+	//caching data for further queries
+	_, createStateCacheErr := conn.Do("HSET", redis.Args{}.Add(stateCode).AddFlat(stateCases)...)
+	if createStateCacheErr != nil {
+		fmt.Printf("Error caching data: %s \n", createStateCacheErr.Error())
+	}
+
+	//setting cache expiry
+	_, setStateCacheExipryErr := conn.Do("EXPIRE", stateCode, "1800")
+	if setStateCacheExipryErr != nil {
+		fmt.Printf("Error while setting expiry for state code %s cache: %s", stateCode, setStateCacheExipryErr.Error())
+	}
+}
+
+func ConvertCachetoStruct(stateCode string, stateCases models.Cases, stateCache []interface{}) models.Cases {
+
+	fmt.Printf("Fetching data for state code: %s from cache \n", stateCode)
+	if err := redis.ScanStruct(stateCache, &stateCases); err != nil {
+		fmt.Println(err.Error())
+	}
+
+	return stateCases
+}
+
+func RetrieveCache(conn redis.Conn, stateCode string, stateCases models.Cases) (models.Cases, error) {
+	//retrieving cached data
+	stateCache, stateCacheErr := redis.Values(conn.Do("HGETALL", stateCode))
+	if stateCacheErr != nil {
+		return stateCases, stateCacheErr
+	} else {
+		stateCases = ConvertCachetoStruct(stateCode, stateCases, stateCache)
+	}
+	return stateCases, nil
 }
 
 func GetStateFromGPS(latitude float64, longitude float64) echo.Map {
@@ -85,12 +186,10 @@ func GetStateFromGPS(latitude float64, longitude float64) echo.Map {
 	reverseGeocodingRequest, reverseGeocodingRequestErr := http.NewRequest(method, reverseGeocodingUrl, nil)
 
 	if reverseGeocodingRequestErr != nil {
-		fmt.Println(reverseGeocodingRequestErr)
 		return echo.Map{"Error": reverseGeocodingRequestErr.Error()}
 	}
 	reverseGeocodingResponse, reverseGeocodingResponseErr := client.Do(reverseGeocodingRequest)
 	if reverseGeocodingResponseErr != nil {
-		fmt.Println(reverseGeocodingResponseErr)
 		return echo.Map{"Error": reverseGeocodingResponseErr.Error()}
 	}
 	defer reverseGeocodingResponse.Body.Close()
@@ -98,24 +197,19 @@ func GetStateFromGPS(latitude float64, longitude float64) echo.Map {
 	// reading the body of the response
 	body, ReadErr := ioutil.ReadAll(reverseGeocodingResponse.Body)
 	if ReadErr != nil {
-		fmt.Println(ReadErr)
 		return echo.Map{"Error": ReadErr.Error()}
 	}
 	fmt.Println(string(body))
-	//fmt.Printf("type of body is %T", body)
-	//fmt.Println()
 	var data map[string]interface{}
 
 	parsingErr := json.Unmarshal(body, &data)
 	if parsingErr != nil {
-		fmt.Println(parsingErr)
 		return echo.Map{"Error": parsingErr.Error()}
 	}
 
 	// jquery using jmespath to get state name from the given gps location
 	stateName, stateNameErr := jmespath.Search("address.state", data)
 	if stateNameErr != nil {
-		fmt.Println(stateNameErr)
 		return echo.Map{"Error": stateNameErr.Error()}
 	}
 
