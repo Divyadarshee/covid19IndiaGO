@@ -4,8 +4,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server server.",
-        "title": "Echo Swagger Example API",
+        "description": "This is a covid19 cases data server which when given the GPS coordinates of a location returns\nthe cases details as in confirmed, deceased, recovered, teseted along with vaccination details as in\nsingle and double dose in coordinates provided State and in India in total",
+        "title": "Covid19 Cases and Vaccinations in India",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
@@ -18,7 +18,7 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:3000",
+    "host": "covid19-go-deploy.herokuapp.com",
     "basePath": "/",
     "paths": {
         "/": {
@@ -47,7 +47,7 @@
         },
         "/cases": {
             "get": {
-                "description": "Get the covid19 cases details for the given GPS location.",
+                "description": "Get the covid19 cases details for the given GPS coordinates.",
                 "consumes": [
                     "*/*"
                 ],
@@ -55,7 +55,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "user"
+                    "cases"
                 ],
                 "summary": "Get latest covid19 cases.",
                 "parameters": [
