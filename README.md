@@ -15,6 +15,9 @@ Deployment in Heroku
       1. Latitude (only within India)
       2. Longitude (only within India)
 
+## Swagger endpoint
+<app_url>/swagger/index.html
 
 ## Example
 https://covid19-go-deploy.herokuapp.com/cases?latitude=26.92&longitude=75.82
+https://covid19-go-deploy.herokuapp.com/swagger/index.html
