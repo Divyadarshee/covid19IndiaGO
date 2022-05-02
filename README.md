@@ -19,5 +19,20 @@ Deployment in Heroku
 <app_url>/swagger/index.html
 
 ## Example
-https://covid19-go-deploy.herokuapp.com/cases?latitude=26.92&longitude=75.82
-https://covid19-go-deploy.herokuapp.com/swagger/index.html
+- https://covid19-go-deploy.herokuapp.com/cases?latitude=26.92&longitude=75.82
+- https://covid19-go-deploy.herokuapp.com/swagger/index.html
+
+
+## Useful Links while developing
+
+### Golang echo mongodb sample:
+- [Starting point](https://dev.to/hackmamba/build-a-rest-api-with-golang-and-mongodb-echo-version-2gdg)
+
+### Swagger:
+- [echo-swagger](https://github.com/swaggo/echo-swagger)
+- [echo-swagger tutorial](https://medium.com/geekculture/tutorial-generate-swagger-specification-and-swaggerui-for-echo-go-web-framework-3ac33afc77e2)
+
+### Redis:
+- [redis commands](https://redis.io/commands/)
+- [Redigo helpers — AddFlat and ScanStruct](https://itnext.io/storing-go-structs-in-redis-using-rejson-dab7f8fc0053)
+- [Getting started with redigo](https://developer.redis.com/develop/golang/)
